@@ -31,6 +31,7 @@ def extract_landmarks(image_path):
     faces = detector(gray)
     landmarks = []
 
+
     for face in faces:
         # Mendapatkan landmark wajah
         shape = predictor(gray, face)

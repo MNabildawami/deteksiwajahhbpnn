@@ -55,7 +55,9 @@ for bar in bars:
     yval = bar.get_height()
     plt.text(bar.get_x() + bar.get_width() / 2, yval + 0.05, f'{yval}', ha='center', va='bottom', fontsize=12)
 
+
 # Menambahkan judul dan label pada diagram batang
 plt.title('Prediksi Benar vs Salah', fontsize=16)
 plt.ylabel('Jumlah Prediksi', fontsize=14)
 plt.show()
+

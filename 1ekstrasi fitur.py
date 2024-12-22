@@ -23,7 +23,7 @@ def extract_landmarks(image_path):
 
     # Ambil landmark dari wajah pertama
     shape = predictor(gray, faces[0])
-    landmarks = [(shape.part(i).x, shape.part(i).y) for i in range(68)]  # 68 titik landmark
+    landmarks = [(shape.part(i).x, shape.part(i).y) for i in range(68)]
 
     return landmarks
 
@@ -110,6 +110,7 @@ if not os.path.exists(output_folder):
 # Simpan file ke folder output
 csv_path = os.path.join(output_folder, "face_features_dlib.csv")
 excel_path = os.path.join(output_folder, "face_features_dlib.xlsx")
+
 
 df.to_csv(csv_path, index=False)
 df.to_excel(excel_path, index=False)
