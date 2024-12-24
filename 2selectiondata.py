@@ -2,23 +2,18 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 import os
 
-# Baca file CSV
 input_csv_path = "output/face_features_dlib.csv"
 data = pd.read_csv(input_csv_path)
 
-# Buat folder untuk menyimpan hasil pembagian data
 split_output_folder = "output"
 os.makedirs(split_output_folder, exist_ok=True)
 
-# Fungsi untuk membagi data dan menyimpan hasilnya
 def split_and_save_data(data, test_size, ratio_name):
     X = data.drop(columns=["Label"])
     y = data["Label"]
 
-    # Split data menjadi data latih dan data uji
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size, random_state=42, stratify=y)
 
-    # Simpan hasil pembagian data ke file CSV
     train_data = pd.concat([X_train, y_train], axis=1)
     test_data = pd.concat([X_test, y_test], axis=1)
 
@@ -31,7 +26,6 @@ def split_and_save_data(data, test_size, ratio_name):
     print(f"Data latih ({ratio_name}) disimpan di: {train_csv_path}")
     print(f"Data uji ({ratio_name}) disimpan di: {test_csv_path}")
 
-# Pembagian data dengan rasio yang berbeda
 split_and_save_data(data, test_size=0.3, ratio_name="70_30")
 split_and_save_data(data, test_size=0.2, ratio_name="80_20")
 split_and_save_data(data, test_size=0.1, ratio_name="90_10")

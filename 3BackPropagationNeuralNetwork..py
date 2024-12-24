@@ -6,45 +6,37 @@ from sklearn.preprocessing import LabelEncoder, MinMaxScaler
 from sklearn.metrics import classification_report, accuracy_score, confusion_matrix
 import seaborn as sns
 
-# Tentukan folder output
 output_folder = "output"
 if not os.path.exists(output_folder):
     os.makedirs(output_folder)
 
-# Load dataset
-train_file = os.path.join(output_folder, 'data_latih_70_30.csv')
-test_file = os.path.join(output_folder, 'data_uji_70_30.csv')
+train_file = os.path.join(output_folder, 'data_latih_90_10.csv')
+test_file = os.path.join(output_folder, 'data_uji_90_10.csv')
 
 df_train = pd.read_csv(train_file)
 df_test = pd.read_csv(test_file)
 
-# Ekstraksi fitur dan label dari data latih
 features = ["Eye Distance", "Nose-Mouth Distance", "Brow Distance", "Nose-Chin Distance", "Mouth Corners Distance"]
 x_train = df_train[features].values
 y_train = df_train['Label'].values
 
-# Encode label ke dalam bentuk integer
 label_encoder = LabelEncoder()
 y_train = label_encoder.fit_transform(y_train)
 
-# Normalisasi nilai fitur
 scaler = MinMaxScaler()
 x_train = scaler.fit_transform(x_train)
 x_test = scaler.transform(df_test[features].values)
 
-# Definisikan struktur jaringan saraf
 n_inputs = len(features)
-n_hidden = 10  # Coba dengan 10 neuron tersembunyi
+n_hidden = 10
 n_outputs = len(set(y_train))
 l_rate = 0.05
 momentum = 0.9
 n_epoch = 1000
 patience = 20
 
-
-# Inisialisasi jaringan saraf
 def initialize_network(n_inputs, n_hidden, n_outputs):
-    np.random.seed(42)  # Untuk reproduktifitas
+    np.random.seed(42)
     network = [
         [{'weights': np.random.normal(scale=0.01, size=n_inputs + 1), 'velocity': np.zeros(n_inputs + 1)} for _ in
          range(n_hidden)],
@@ -53,24 +45,17 @@ def initialize_network(n_inputs, n_hidden, n_outputs):
     ]
     return network
 
-
-# Fungsi aktivasi Leaky ReLU dengan penanganan numerik yang lebih baik
 def leaky_relu(x, alpha=0.01, derivative=False):
     if derivative:
         return np.where(x > 0, 1, alpha)
     return np.where(x > 0, x, alpha * x)
 
-
-# Fungsi aktivasi sigmoid dengan pencegahan overflow
 def sigmoid(x, derivative=False):
-    # Batasi nilai untuk menghindari overflow eksponensial
     x = np.clip(x, -500, 500)
     if derivative:
         return x * (1.0 - x)
     return 1.0 / (1.0 + np.exp(-x))
 
-
-# Forward propagation
 def forward_propagate(network, row):
     inputs = row
     for layer in network:
@@ -82,8 +67,6 @@ def forward_propagate(network, row):
         inputs = new_inputs
     return inputs
 
-
-# Backward propagation untuk menghitung error
 def backward_propagate_error(network, expected):
     for i in reversed(range(len(network))):
         layer = network[i]
@@ -102,8 +85,6 @@ def backward_propagate_error(network, expected):
                 neuron['output'], derivative=True)
             neuron['delta'] = errors[j] * derivative
 
-
-# Update bobot jaringan dengan momentum dan regularisasi L2
 def update_weights(network, row, l_rate, momentum, l2_lambda=0.01):
     for i in range(len(network)):
         inputs = row[:-1] if i == 0 else [neuron['output'] for neuron in network[i - 1]]
@@ -116,13 +97,9 @@ def update_weights(network, row, l_rate, momentum, l2_lambda=0.01):
             neuron['velocity'][-1] = momentum * neuron['velocity'][-1] + gradient_bias
             neuron['weights'][-1] += neuron['velocity'][-1]
 
-
-# Learning rate decay
 def learning_rate_decay(initial_lr, epoch, decay_rate=0.01):
     return initial_lr / (1 + decay_rate * epoch)
 
-
-# Melatih jaringan saraf dengan Early Stopping
 def train_network(network, train, l_rate, momentum, n_epoch, n_outputs, patience):
     best_loss = float('inf')
     no_improvement = 0
@@ -148,7 +125,6 @@ def train_network(network, train, l_rate, momentum, n_epoch, n_outputs, patience
 
         print(f"Epoch {epoch + 1}, Loss: {total_loss:.4f}, Accuracy: {accuracy:.4f}")
 
-        # Update learning rate
         l_rate = learning_rate_decay(l_rate, epoch)
 
         if total_loss < best_loss:
@@ -160,7 +136,6 @@ def train_network(network, train, l_rate, momentum, n_epoch, n_outputs, patience
             print(f"Early stopping at epoch {epoch + 1}")
             break
 
-    # Visualisasi kerugian dan akurasi pelatihan
     plt.figure(figsize=(12, 6))
 
     plt.subplot(1, 2, 1)
@@ -181,31 +156,23 @@ def train_network(network, train, l_rate, momentum, n_epoch, n_outputs, patience
 
     return losses
 
-
-# Membuat prediksi
 def predict(network, row):
     outputs = forward_propagate(network, row)
     return outputs.index(max(outputs))
 
-
-# Persiapkan data latih
 train_data = np.column_stack((x_train, y_train.astype(int)))
 network = initialize_network(n_inputs, n_hidden, n_outputs)
 
-# Latih model
 losses = train_network(network, train_data, l_rate, momentum, n_epoch, n_outputs, patience)
 
-# Prediksi data uji
 predictions = [predict(network, row) for row in x_test]
 predicted_labels = label_encoder.inverse_transform(predictions)
 
-# Evaluasi hasil
 true_labels = label_encoder.transform(df_test['Label'].values)
 accuracy = accuracy_score(true_labels, predictions)
 print("Accuracy on test data:", accuracy)
 print(classification_report(true_labels, predictions, target_names=label_encoder.classes_))
 
-# Confusion matrix
 cm = confusion_matrix(true_labels, predictions)
 plt.figure(figsize=(8, 6))
 sns.heatmap(cm, annot=True, fmt="d", cmap="Blues", xticklabels=label_encoder.classes_,
@@ -215,7 +182,6 @@ plt.xlabel("Predicted")
 plt.ylabel("True")
 plt.show()
 
-# Simpan prediksi ke file
 df_test['Predicted_Label'] = predicted_labels
 predictions_csv_path = os.path.join(output_folder, 'predictions.csv')
 df_test.to_csv(predictions_csv_path, index=False)
